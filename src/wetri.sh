@@ -62,31 +62,42 @@ take_lock() {
 	[[ -z "$_job" ]] && return 1
 
 	local _pidfile="${LOCKDIR}/wetri.$job_name"
+	local _ec=1
 
-	# lock file already in place for this job?
-	if [[ -e "$_pidfile" ]] ; then
-		# is the pid still alive?
-		local _other_pid=$(cat $_pidfile)
-		ps -p $_other_pid & >/dev/null
-		if [[ $? = 0 ]] ; then
-			bomb "Lock file for job '$_job' already exists!"
-		fi
-			# It died without cleaning up
-			feedback "PID file for job '$_job' still exists but the process is dead"
-			rm -f $_pidfile || bomb "Unable to remove dead lockfile: $_pidfile"
-			take_lock && return 0
-		fi
-	else
-		# Not already there; Try to make it.
-		touch $_pidfile
-		if [[ $? -eq 0 ]] ; then
-			# success!
-			echo "$$" > $_pidfile
-			return 0
+	while true ; do
+		# lock file already in place for this job?
+		if [[ -e "$_pidfile" ]] ; then
+			# is the pid still alive?
+			dbg 'Found existing lockfile'
+			local _other_pid=$(cat $_pidfile)
+			dbg "Other pid is $_other_pid"
+			ps -p $_other_pid &>/dev/null
+			if [[ $? -eq 0 ]] ; then
+				bomb "Lock file for job '$_job' already exists!"
+			else
+				# It died without cleaning up
+				feedback "PID file for job '$_job' still exists but the process is dead"
+				# if we remove the old lockfile, then start the loop again to try
+				# taking the lock a second time
+				rm -f $_pidfile && continue
+				# rm failed so we have to abort
+				bomb "Unable to remove dead lockfile: $_pidfile"
+			fi
 		else
-			bomb "Unable to obtain lock file: $_pidfile"
+			# Not already there; Try to make it.
+			dbg "touching $_pidfile"
+			echo "$$" > $_pidfile
+			if [[ $? -eq 0 ]] ; then
+				# success!
+				add_to_cleanup $_pidfile
+				return 0
+			else
+				bomb "Unable to obtain lock file: $_pidfile"
+			fi
 		fi
-	fi
+
+		break	# make sure we don't end up in an endless loop
+	done
 
 	# assume we couldn't get the lock, but we shuld never get here anyway
 	return 1
@@ -97,7 +108,7 @@ take_lock() {
 ###############################################################################
 
 # test for required binaries
-require_bins cat touch seq ps rm
+require_bins cat seq ps rm
 
 # get our cmdline args
 dbg 'Starting getopts'
@@ -142,7 +153,7 @@ if [[ -z "$job_name" ]] || [[ -z "$loop_cnt" ]] ; then
 fi
 
 # attempt to take a lock for this job name
-take_lock $job_name || bomb "Unable to obtain a lock for job '$job_name'"
+take_lock $job_name || bomb "take_lock failed"
 
 # remove the arguments that we parsed above with getopts
 shift $(expr $OPTIND - 1)
