@@ -103,9 +103,30 @@ take_lock() {
 	return 1
 }
 
+function cleanup() {
+	feedback 'Cleaning up'
+	for fname in "${cleanup_files[@]}" ; do
+		rm -f $fname || true
+	done
+}
+
+function add_to_cleanup() {
+	local n=${#cleanup_files[*]}
+	# on our first invocation of this function, the array will be empty
+	# so that is the time to set the EXIT trap
+	if [[ $n -eq 0 ]] ; then
+		trap cleanup EXIT
+	fi
+	# append #* to the array of files to cleanup on exit
+	cleanup_files[$n]="$*"
+}
+
 ###############################################################################
 ### MAIN
 ###############################################################################
+
+# this keeps track of any files we need to cleanup on exit
+declare -a cleanup_files
 
 # test for required binaries
 require_bins cat seq ps rm
@@ -186,5 +207,7 @@ else
 	# we failed
 	feedback "Even after $c attempts, your command still failed. Sorry"
 fi
+
+# no need to call cleanup() because a trap will be set if it is required
 
 exit $ec
