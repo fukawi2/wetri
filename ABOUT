@@ -1,0 +1,5 @@
+wetri is a wrapper that will attempt to execute a task X number of times,
+automatically retrying if the task fails.
+
+The name is purely a bastardization of "retry" to make it more unique. It is
+pronounced "we-try"
