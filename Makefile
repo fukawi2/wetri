@@ -2,7 +2,7 @@
 PROJECT=wetri
 
 ### Dependencies
-DEP_BINS=mktemp cat grep bash
+DEP_BINS=bash cat seq ps rm
 
 ### Destination Paths
 D_BIN=/usr/local/sbin
