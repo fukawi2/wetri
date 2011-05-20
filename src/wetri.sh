@@ -23,6 +23,7 @@ source "$common_script"
 
 # constants
 DEBUG=0
+LOCKDIR='/var/lock'
 
 ###############################################################################
 ### FUNCTIONS
@@ -60,9 +61,35 @@ take_lock() {
 	local _job="$1"
 	[[ -z "$_job" ]] && return 1
 
-	# TODO:
+	local _pidfile="${LOCKDIR}/wetri.$job_name"
 
-	return 0
+	# lock file already in place for this job?
+	if [[ -e "$_pidfile" ]] ; then
+		# is the pid still alive?
+		local _other_pid=$(cat $_pidfile)
+		ps -p $_other_pid & >/dev/null
+		if [[ $? = 0 ]] ; then
+			bomb "Lock file for job '$_job' already exists!"
+		fi
+			# It died without cleaning up
+			feedback "PID file for job '$_job' still exists but the process is dead"
+			rm -f $_pidfile || bomb "Unable to remove dead lockfile: $_pidfile"
+			take_lock && return 0
+		fi
+	else
+		# Not already there; Try to make it.
+		touch $_pidfile
+		if [[ $? -eq 0 ]] ; then
+			# success!
+			echo "$$" > $_pidfile
+			return 0
+		else
+			bomb "Unable to obtain lock file: $_pidfile"
+		fi
+	fi
+
+	# assume we couldn't get the lock, but we shuld never get here anyway
+	return 1
 }
 
 ###############################################################################
@@ -70,7 +97,7 @@ take_lock() {
 ###############################################################################
 
 # test for required binaries
-require_bins cat touch seq
+require_bins cat touch seq ps rm
 
 # get our cmdline args
 dbg 'Starting getopts'
