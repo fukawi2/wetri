@@ -138,8 +138,8 @@ loop_cnt=3
 sleep_interval=30s
 expected_ec=0
 verbose=
-silent=
-while getopts "j:t:i:e:vh" OPTION ; do
+show_output=
+while getopts "j:t:i:e:vsh" OPTION ; do
 	case $OPTION in
 		h)
 			usage 0
@@ -158,6 +158,9 @@ while getopts "j:t:i:e:vh" OPTION ; do
 			;;
 		v)
 			verbose='yes'
+			;;
+		s)
+			show_output='yes'
 			;;
 		?)
 			usage 1
@@ -194,16 +197,19 @@ if [[ -z "$users_cmd" ]] ; then
      usage 1
 fi
 
+logfile=$(mktemp --tmpdir wetri-$job_name-XXX.tmp)
+[[ -z "$logfile" ]] && bomb 'Failed to create temporary file'
+
 feedback "$(printf "%15s %d" 'Attempts:' $loop_cnt)"
 feedback "$(printf "%15s %s" 'Interval:' $sleep_interval)"
 feedback "$(printf "%15s %d" 'Success Code:' $expected_ec)"
 feedback "$(printf "%15s %s" 'Command:' "$users_cmd")"
 
-ec=1
 for c in $(seq 1 $loop_cnt) ; do
 	feedback "==> Attempt $c"
-	$users_cmd
+	cmd_output=$($users_cmd)
 	ec=$?
+	[[ -n "$show_output" ]] && echo $cmd_output
 	if [[ $ec -eq $expected_ec ]] ; then
 		break
 	fi
@@ -218,6 +224,10 @@ if [[ $ec -eq $expected_ec ]] ; then
 else
 	# we failed
 	feedback "Even after $c attempts, your command still failed. Sorry"
+	feedback 'Last output is below'
+	feedback '==================================================='
+	echo $cmd_output
+	feedback '==================================================='
 fi
 
 # no need to call cleanup() because a trap will be set if it is required
