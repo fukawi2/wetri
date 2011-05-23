@@ -194,8 +194,10 @@ if [[ -z "$users_cmd" ]] ; then
      usage 1
 fi
 
-feedback "Attempting '$loop_cnt' times, with '$sleep_interval' between attempts, to execute:"
-feedback "   $users_cmd"
+feedback "$(printf "%15s %d" 'Attempts:' $loop_cnt)"
+feedback "$(printf "%15s %s" 'Interval:' $sleep_interval)"
+feedback "$(printf "%15s %d" 'Success Code:' $expected_ec)"
+feedback "$(printf "%15s %s" 'Command:' "$users_cmd")"
 
 ec=1
 for c in $(seq 1 $loop_cnt) ; do
