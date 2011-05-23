@@ -139,7 +139,7 @@ sleep_interval=30s
 expected_ec=0
 verbose=
 silent=
-while getopts "j:t:i:vsh" OPTION ; do
+while getopts "j:t:i:e:vh" OPTION ; do
 	case $OPTION in
 		h)
 			usage 0
