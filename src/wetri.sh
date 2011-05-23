@@ -154,7 +154,7 @@ while getopts "j:t:i:e:vh" OPTION ; do
 			sleep_interval="$OPTARG"
 			;;
 		e)
-			expected_ex="$OPTARG"
+			expected_ec="$OPTARG"
 			;;
 		v)
 			verbose='yes'
@@ -191,8 +191,8 @@ ec=1
 for c in $(seq 1 $loop_cnt) ; do
 	feedback "==> Attempt $c"
 	$users_cmd
-	if [[ $? -eq $expected_ec ]] ; then
-		ec=$expected_ec
+	ec=$?
+	if [[ $ec -eq $expected_ec ]] ; then
 		break
 	fi
 	# Wait X before trying again
