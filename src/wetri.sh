@@ -173,6 +173,16 @@ if [[ -z "$job_name" ]] || [[ -z "$loop_cnt" ]] ; then
 	usage 1
 fi
 
+# validate the user input
+[[ "$loop_cnt"			=~ ^[0-9]+$ ]]			|| \
+	bomb "Invalid loop count: $loop_cnt"
+[[ "$sleep_interval"	=~ ^[0-9]+[smhd]?$ ]]	|| \
+	bomb "Invalid interval: $sleep_interval"
+[[ "$job_name"			=~ ^[A-Za-z0-9]+$ ]]	|| \
+	bomb "Invalid job name: $job_name"
+[[ "$expected_ec"		=~ ^[0-9]+$ ]]			|| \
+	bomb "Invalid exit code: $expected_ec"
+
 # attempt to take a lock for this job name
 take_lock $job_name || bomb "take_lock failed"
 
