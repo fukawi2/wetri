@@ -5,9 +5,8 @@ PROJECT=wetri
 DEP_BINS=bash cat seq ps rm
 
 ### Destination Paths
-D_BIN=/usr/local/sbin
+D_BIN=/usr/local/bin
 D_DOC=/usr/local/share/doc/$(PROJECT)
-D_CNF=/etc
 
 ### Lists of files to be installed
 F_DOCS=ABOUT README LICENSE CHANGES
@@ -16,7 +15,7 @@ F_DOCS=ABOUT README LICENSE CHANGES
 
 all: install
 
-install: test bin docs config
+install: test bin docs
 
 test:
 	@echo "==> Checking for required external dependencies"
@@ -26,7 +25,7 @@ test:
 
 	@echo "==> It all looks good Captain!"
 
-bin: test $(PROJECT).sh
+bin: test src/$(PROJECT).sh
 	install -D -m 0755 src/$(PROJECT).sh $(DESTDIR)$(D_BIN)/$(PROJECT)
 
 docs: $(F_DOCS)
